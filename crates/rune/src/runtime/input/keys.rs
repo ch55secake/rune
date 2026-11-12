@@ -1,7 +1,29 @@
 //! Keyboard, IME, focused-field editing and clipboard paste routing.
 use super::*;
 
+#[cfg(test)]
+#[path = "keys/focus_observation_tests.rs"]
+mod focus_observation_tests;
+
 impl<S: 'static> Runtime<S> {
+    /// The authored key of the focused element in the last presented tree, or the
+    /// focused link's id. Returns `None` for unkeyed elements, exiting subtrees and
+    /// focused virtual fields that are not mounted.
+    ///
+    /// Equivalent to finding the non-exiting focused element in [`Self::elements`],
+    /// without collecting the tree's text, layout and animation metadata. Useful
+    /// in `App::on_frame_drawn` after pointer, keyboard or accessibility navigation.
+    pub fn presented_focus_key(&self) -> Option<&str> {
+        let i = self.focused_index()?;
+        let node = &self.nodes[i];
+        if self.subtree_exiting(i) { return None; }
+        self.scene.presented(node.id)?;
+        if node.text.as_ref().is_some_and(|t| !t.links.is_empty()) {
+            return self.presented_focused_link_id(i);
+        }
+        node.key.as_deref()
+    }
+
     /// Offer a logical key that already passed `held_gate` to the app, the focused
     /// input's handler, focus traversal and the focused editor, in that order.
     pub(super) fn route_key(&mut self, ev: &KeyEvent, repeat: bool, one: &mut Tx) -> bool {

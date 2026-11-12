@@ -308,6 +308,13 @@ impl<S: 'static> Runtime<S> {
         self.nodes[i].text.as_ref()?.links.get(k).map(|l| l.id.clone())
     }
 
+    pub(super) fn presented_focused_link_id(&self, i: usize) -> Option<&str> {
+        let k = self.links.focus?;
+        // Link elements only exist when the link has a presented line box.
+        if !self.link_boxes(i, self.drawn_box(i)).iter().any(|(j, _)| *j == k) { return None; }
+        self.nodes[i].text.as_ref()?.links.get(k).map(|link| link.id.as_str())
+    }
+
     /// The Menu key on focused node `i`'s focused link: its `on_link_secondary`, at the
     /// bottom-left of its first line box.
     pub(super) fn focused_link_menu(&mut self, i: usize, tx: &mut Tx) -> bool {

@@ -1,0 +1,1 @@
+- `Runtime::presented_focus_key()` observes the last presented element or link's focus without collecting the full inspection tree, including keyboard, pointer and accessibility navigation.
